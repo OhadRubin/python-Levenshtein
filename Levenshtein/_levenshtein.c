@@ -1681,19 +1681,75 @@ opcodes_to_tuple_list(size_t nb, LevOpCode *bops)
 
   list = PyList_New(nb);
   for (i = 0; i < nb; i++, bops++) {
-    PyObject *tuple = PyTuple_New(5);
-    PyObject *is = opcode_names[bops->type].pystring;
-    Py_INCREF(is);
-    PyTuple_SET_ITEM(tuple, 0, is);
+    PyObject *tuple = PyTuple_New(8);
+    // PyObject *is = ;
+    
+    // Py_INCREF(is);
+    // PyTuple_SET_ITEM(tuple, 0, );
+    PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong((long)bops->type));
     PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong((long)bops->sbeg));
     PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong((long)bops->send));
     PyTuple_SET_ITEM(tuple, 3, PyInt_FromLong((long)bops->dbeg));
     PyTuple_SET_ITEM(tuple, 4, PyInt_FromLong((long)bops->dend));
+    PyTuple_SET_ITEM(tuple, 5, PyInt_FromLong((long)bops->dend));
+    PyTuple_SET_ITEM(tuple, 6, PyInt_FromLong((long)(bops->send-bops->sbeg)));
+    PyTuple_SET_ITEM(tuple, 7, PyInt_FromLong((long)(bops->dend-bops->dbeg)));
     PyList_SET_ITEM(list, i, tuple);
   }
 
   return list;
 }
+
+static PyObject*
+opcodes_to_tuple_list_(size_t nb, LevOpCode *bops,PyObject *arg1,PyObject *arg2)
+{
+  PyObject *list;
+  size_t i;
+  // Py_UNICODE *string1, *string2;
+  const char * __string1 = PyUnicode_AS_DATA(arg1);
+  const char * __string2 = PyUnicode_AS_DATA(arg2);
+  const char *errors[4];
+  const char *encoding = "ascii";
+  // ,
+  // const Py_UNICODE * __string1 = PyUnicode_AS_UNICODE(arg1);
+  // const Py_UNICODE * __string2 = PyUnicode_AS_UNICODE(arg2);
+  list = PyList_New(nb);
+  // new_list = PyList_New(2);
+  for (i = 0; i < nb; i++, bops++) {
+    // if(bops->type!=0){
+    PyObject *tuple = PyTuple_New(3);
+    Py_ssize_t s1_size_ = (bops->send-bops->sbeg);
+    Py_ssize_t s2_size_ = (bops->dend-bops->dbeg);
+    PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong((long)bops->type));
+    PyTuple_SET_ITEM(tuple, 1, PyUnicode_AsEncodedString(PyUnicode_DecodeUTF32(__string1+4*bops->sbeg,4*s1_size_,errors,NULL),encoding,errors));
+    PyTuple_SET_ITEM(tuple, 2, PyUnicode_AsEncodedString(PyUnicode_DecodeUTF32(__string2+4*bops->dbeg,4*(s2_size_),errors,NULL),encoding,errors));
+    PyList_SET_ITEM(list, i, tuple);
+  }
+  // Py_ssize_t s1_size_total = 0;
+  // Py_ssize_t s2_size_total = 0;
+  // for (i = 0; i < nb; i++, bops++) {
+  //   if(bops->type==LEV_EDIT_DELETE || bops->type==LEV_EDIT_REPLACE){
+  //     s1_size_total += (bops->send-bops->sbeg);
+  //   }
+  //   if(bops->type==LEV_EDIT_INSERT || bops->type==LEV_EDIT_REPLACE){
+  //     s1_size_total += (bops->dend-bops->dbeg);
+  //   }
+    
+  // }
+  // for (i = 0; i < nb; i++, bops++) {
+  //   // if(bops->type!=0){
+  //   PyObject *tuple = PyTuple_New(3);
+  //   Py_ssize_t s1_size_ = (bops->send-bops->sbeg);
+  //   Py_ssize_t s2_size_ = (bops->dend-bops->dbeg);
+  //   PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong((long)bops->type));
+  //   PyTuple_SET_ITEM(tuple, 1, PyUnicode_AsEncodedString(PyUnicode_DecodeUTF32(__string1+4*bops->sbeg,4*s1_size_,errors,NULL),encoding,errors));
+  //   PyTuple_SET_ITEM(tuple, 2, PyUnicode_AsEncodedString(PyUnicode_DecodeUTF32(__string2+4*bops->dbeg,4*(s2_size_),errors,NULL),encoding,errors));
+  //   PyList_SET_ITEM(list, i, tuple);
+  // }
+
+  return list;
+}
+
 
 static PyObject*
 opcodes_py(PyObject *self, PyObject *args)
@@ -1790,7 +1846,12 @@ opcodes_py(PyObject *self, PyObject *args)
   free(ops);
   if (!bops && nb)
     return PyErr_NoMemory();
-  oplist = opcodes_to_tuple_list(nb, bops);
+  // string1 = PyString_AS_STRING(arg1);
+  // string2 = PyString_AS_STRING(arg2);
+  // oplist = opcodes_to_tuple_list(nb, bops);
+  // oplist = opcodes_to_tuple_list(nb, bops);
+  oplist = opcodes_to_tuple_list_(nb, bops,arg1,arg2);
+  
   free(bops);
   return oplist;
 }
